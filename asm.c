@@ -37,7 +37,7 @@ typedef enum USER_MAIN_CMD {
 
 //Function Declarations
 int parMainCmd(char* cmd);
-int par
+//int par
 
 //Main function
 int main(int argc, char *argv[]) {

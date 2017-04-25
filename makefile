@@ -1,16 +1,16 @@
 CC = gcc
 
 # put your server object files here
-OBJS1 = mail_server.o
+OBJS1 = asm.o
 
 # put your client object files here
-OBJS2 = mail_client.o 
+OBJS2 = sim.o 
 
 # The executabel filename of the server app
-EXEC1 = mail_server
+EXEC1 = asm
 
 # The executabel filename of the client app
-EXEC2 = mail_client
+EXEC2 = sim
 
 
 C_COMP_FLAG = -Wall -g  -DNDEBUG 
@@ -20,10 +20,10 @@ C_COMP_FLAG = -Wall -g  -DNDEBUG
 
 all: $(EXEC1) $(EXEC2)
 
-mail_server.o:   
+asm.o:   
 		$(CC) $(C_COMP_FLAG)  -c $*.c
 
-mail_client.o:   
+sim.o:   
 		$(CC) $(C_COMP_FLAG)  -c $*.c
 
 $(EXEC1): $(OBJS1)
