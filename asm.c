@@ -28,7 +28,7 @@
 //Command String Declatraions
 #define VAL1  "op1"
 #define VAL2  "op2"
-#define VAL3	"op3"
+#define VAL3  "op3"
 
 //Enum Message Operation Code Declarations
 typedef enum USER_MAIN_CMD {
