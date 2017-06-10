@@ -125,6 +125,7 @@ void create_label_list (FILE* asm_file){ //stores all labels and their addresses
 			insert_to_label_list(create_node(label, address));
 			//insert_to_label_list(create_node(label, address-offset));
 			//offset++;
+			address--;
 			}
 		address++;
 	} while (fgets(line, LINE_SIZE, asm_file));
@@ -318,13 +319,13 @@ int main(int argc, char *argv[])
 	fp_asm = fopen(argv[2], "rt"); // asm file is where the assembly program can be found.
 
 	if (!fp_memin) {
-		printf(ERR_MSG_OPEN_FILE);
+//		printf(ERR_MSG_OPEN_FILE);
 		puts(argv[1]);
 		exit(-1);
 	}
 
 	if (!fp_asm) {
-		printf(ERR_MSG_OPEN_FILE);
+//		printf(ERR_MSG_OPEN_FILE);
 		puts(argv[2]);
 		exit(-1);
 	}
