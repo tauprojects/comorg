@@ -6,15 +6,9 @@
  */
 
 // run configurations: "test.txt" "D:\C Software Project\fib.asm"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-//#include "asm.h"
-#define MEM_SIZE (1 << 16)
-#define LINE_SIZE (500)
-#define BIT_SIZE (1 << 4)
+#include "asm.h"
+
 /*
  * All labels in the .asm will be added as nodes to a linked list. Each node will contain
  * the label itself, and its original address (line number) in the .asm file.
@@ -51,11 +45,24 @@ void removespaces(char* source)
 }
 
 /*
+ * func returns 1 iff the line is empty
+ */
+int check_empty(char *line){
+  while (*line != '\0') {
+	if (!isspace(*line))
+	  return 0;
+	line++;
+  }
+  return 1;
+}
+
+
+/*
  * clean_and_convert_to_lowercase converts its string parameter into lowercase string.
  */
 void clean_and_convert_to_lowercase(char *word){
 	int i;
-	for(i = 0; word[i]; i++){
+	for(i=0; word[i]; i++){
 		word[i] = tolower(word[i]);
 	}
 	removespaces(word);
@@ -100,8 +107,17 @@ void create_label_list (FILE* asm_file){ //stores all labels and their addresses
 	int address = 0;
 	char line[500];
 	//int offset = 0;
-	fgets(line, LINE_SIZE, asm_file);
+	while(1){
+		fgets(line, LINE_SIZE, asm_file);
+		if(check_empty(line)==0){ //meaning this is not an empty line
+			break;
+		}
+	}
+	//fgets(line, LINE_SIZE, asm_file);
 	do{
+		if(check_empty(line)==1){ //meaning this is an empty line
+			continue;
+		}
 		char* label_end = strstr(line, ":");
 		if (label_end){ // if the sentence contains ':', label_end is assigned a pointer to that place, else NULL.
 			label = strtok(line, ":"); // save only the beginning of the string, up until the ":"
@@ -128,7 +144,6 @@ int search_label_list(char *imm){
 	   current = current->next;
    }
    return NULL;
-//   return -1;
 }
 
 /*
@@ -137,9 +152,8 @@ int search_label_list(char *imm){
  */
 char* process_first_word (char *operation){
 	char *first = malloc(5);
-	int op_num;
+	int op_num, i;
 	clean_and_convert_to_lowercase(operation);
-	int i;
 	for(i=0; i<BIT_SIZE; i++){
 		if(strcmp(operation, op_name[i])==0){
 			op_num = i;
@@ -155,9 +169,8 @@ char* process_first_word (char *operation){
  */
 char* process_registers (char *reg){
 	char *second = malloc(5);
-	int reg_num;
+	int reg_num, i;
 	clean_and_convert_to_lowercase(reg);
-	int i;
 	for(i=0; i<BIT_SIZE; i++){
 		if(!strcmp(reg, reg_name[i])){
 			reg_num = i;
@@ -216,15 +229,19 @@ void process_dot_word(char *address, char *data, char** mem_array){
 	strcpy(mem_array[int_address], final_data);
 }
 
+
 /*
  * this function takes a .asm line, converts it into
  * the proper HEX string and stores it in the mem_array.
  */
-int process_single_asm_line_to_file(char *asm_line, int line_number, char** mem_array){
+int process_single_asm_line_to_array(char *asm_line, int line_number, char** mem_array){
 	char *first, *second, *third, *fourth, *fifth;
-	if(strlen(asm_line)==1){
-		return line_number-1;
+	if(check_empty(asm_line)==1){
+		return line_number;
 	}
+//	if(strlen(asm_line)<5){
+//		return line_number-1;
+//	}
 	first = strtok(asm_line, " ");
 	second = strtok(NULL, "\t ,\t ");
 	third = strtok(NULL, "\t ,\t ");
@@ -233,7 +250,7 @@ int process_single_asm_line_to_file(char *asm_line, int line_number, char** mem_
 
 	char* word = strstr(first, ":"); // here we check if the line represents the label, so we should ignore it. .
 	if (word){ // this means this is a label, no need to process into the mem_in file.
-		return line_number-1;
+		return line_number;
 	}
 	word = strstr(first, ".word");
 	if (word){
@@ -246,20 +263,27 @@ int process_single_asm_line_to_file(char *asm_line, int line_number, char** mem_
 	char *rt = process_registers(fourth);
 	char *imm = process_imm(fifth);
 	sprintf(mem_array[line_number],"%s%s%s%s%s", op, rd, rs, rt, imm);
+	line_number++;
 	return line_number;
 }
 
 /*
  * function takes each line of the asm file, translates it into proper 32bit word and updates the mem_in array.
  */
-void go_over_asm_program(FILE *filein, char** mem_array){
+void iterate_asm_program(FILE *filein, char** mem_array){
 	char asm_line[LINE_SIZE]; //line will conatain one line from the .asm file every loop.
 	fgets(asm_line, LINE_SIZE, filein);
-	process_single_asm_line_to_file(asm_line, 0, mem_array);
-	int line_number = 1;
+	int line_number = 0;
+	line_number = process_single_asm_line_to_array(asm_line, 0, mem_array);
+//	if (line_number<0){
+//		line_number = 0;
+//	}
+//	else{
+//		line_number = 1;
+//	}
 	while (fgets(asm_line, LINE_SIZE, filein)) {
-		line_number = process_single_asm_line_to_file(asm_line, line_number, mem_array);
-		line_number++;
+		line_number = process_single_asm_line_to_array(asm_line, line_number, mem_array);
+//		line_number++;
 	}
 }
 
@@ -269,37 +293,45 @@ void go_over_asm_program(FILE *filein, char** mem_array){
  * non zero line. this line will then be the last to be written
  * into the memin file.
  */
-void write_to_file(FILE *memin, char** mem_array){
+void write_array_of_lines_to_file(FILE *memin, char** mem_array){
 	int i=0;
 	int final_line=0;
-	for(i=MEM_SIZE-1; i>=0; i--){
+	for(i=MEM_SIZE-1; i>=0; i--){ //this loop counts total number of lines in file
 		if(strcmp(mem_array[i], "00000000")!=0){
 			final_line = i;
 			break;
 		}
 	}
-	for(i=0; i<final_line+1; i++){
+	for(i=0; i<final_line+1; ++i){
 		fprintf(memin, "%s\n", mem_array[i]);
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3) {
-		printf("usage: dis memin.txt program.asm\n");
-		exit(1);
-	}
+//	if (argc != 3) {
+//		printf("usage: dis memin.txt program.asm\n");
+//		exit(1);
+//	}
 	char **memin_array = (char**)malloc(MEM_SIZE*sizeof(char*));
 	fp_memin = fopen(argv[1], "wt"); //memin file is the file to write to.
 	fp_asm = fopen(argv[2], "rt"); // asm file is where the assembly program can be found.
-	if (!fp_memin || !fp_asm) {
-		printf("ERROR: couldn't open files\n");
-		exit(1);
+
+	if (!fp_memin) {
+		printf(ERR_MSG_OPEN_FILE);
+		puts(argv[1]);
+		exit(-1);
+	}
+
+	if (!fp_asm) {
+		printf(ERR_MSG_OPEN_FILE);
+		puts(argv[2]);
+		exit(-1);
 	}
 	init_mem_array(memin_array); // initiate memin file with 2^16 lines of zeroes.
 	create_label_list(fp_asm); //that's a linked list containing all labels and their addresses.
-	go_over_asm_program(fp_asm, memin_array); //convert the .asm file into the memin file.
-	write_to_file(fp_memin, memin_array);
+	iterate_asm_program(fp_asm, memin_array); //convert the .asm file into the memin file.
+	write_array_of_lines_to_file(fp_memin, memin_array);
 	fclose(fp_memin);
 	fclose(fp_asm);
 

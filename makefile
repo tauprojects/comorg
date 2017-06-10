@@ -20,10 +20,10 @@ C_COMP_FLAG = -Wall -g  -DNDEBUG
 
 all: $(EXEC1) $(EXEC2)
 
-asm.o:   
+asm.o:  asm.h 
 		$(CC) $(C_COMP_FLAG)  -c $*.c
 
-sim.o:   
+sim.o:	sim.h   
 		$(CC) $(C_COMP_FLAG)  -c $*.c
 
 $(EXEC1): $(OBJS1)

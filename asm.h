@@ -13,7 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 
-
+#define ERR_MSG_OPEN_FILE "Error While Opening File: "
 #define MEM_SIZE (1 << 16)
 #define LINE_SIZE (500)
 #define BIT_SIZE (1 << 4)
